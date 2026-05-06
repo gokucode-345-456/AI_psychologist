@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. LOGIC ---
+# --- 3. LOGIC ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -73,20 +73,30 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
-        API_KEY = os.getenv("APIKEY")
+        API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
         if API_KEY:
             try:
                 genai.configure(api_key=API_KEY)
-                # ĐÚNG MODEL GEMINI 1.5 FLASH CẬU CẦN
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    system_instruction="Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."
+                
+                # FIX 404: Dùng trực tiếp tên model không có prefix 'models/'
+                # Và cấu hình model qua GenerativeModel
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"top_p": 0.95, "temperature": 0.7}
                 )
-                response = model.generate_content(prompt)
                 bot_msg = response.text
             except Exception as e:
-                bot_msg = f"Lỗi kỹ thuật: {str(e)[:50]}..."
-        else: bot_msg = "Thiếu API Key rồi cậu ơi!"
+                # Nếu vẫn lỗi, thử dùng tên model đầy đủ hơn
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                    response = model.generate_content(prompt)
+                    bot_msg = response.text
+                except:
+                    bot_msg = f"Vẫn bị lỗi 404 rồi cậu. Thử kiểm tra API Key trong Secrets xem sao nhé!"
+        else: 
+            bot_msg = "Cậu chưa thiết lập API Key trong Secrets hoặc Env!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
