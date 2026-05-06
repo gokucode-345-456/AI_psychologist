@@ -46,7 +46,7 @@ def get_chat_session():
             _ nhắn tin cảm xúc nhiều hơn đi
             _nhắn tin cũng phải có 1 tí cá tính nghen 
             _vừa cá tính mà vừa đồng cảm với người khác
-            _nhắn tin dài hơn đi
+            
             _nhắn tin nhiệt tình hơn nx đi
             _đừng quá nhạt
             _xưng hô linh hoạt 
