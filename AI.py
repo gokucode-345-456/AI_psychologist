@@ -18,7 +18,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. HÀM LƯU TRỮ (FIX LỖI MẤT DATA) ---
+# --- 2. HÀM LƯU TRỮ (JSON) ---
 USER_DB = "users_db.json"
 
 def load_json(path, default):
@@ -49,10 +49,10 @@ if not st.session_state.logged_in:
                 if u in users and users[u] == p:
                     st.session_state.logged_in = True
                     st.session_state.current_user = u
-                    # Load data cũ ngay khi vào
+                    # Load data ngay khi vào để không bị trắng trang
                     st.session_state.messages = load_json(f"history_{u}.json", [])
                     st.rerun()
-                else: st.error("Sai rồi kìa!")
+                else: st.error("Sai thông tin rồi!")
         with tab_r:
             nu = st.text_input("Tên mới", key="r_u")
             np = st.text_input("Mật mã mới", type="password", key="r_p")
@@ -76,11 +76,9 @@ else:
             st.session_state.logged_in = False
             st.rerun()
 
-    # Hiển thị
     for m in st.session_state.messages:
         with st.chat_message(m["role"]): st.markdown(m["content"])
 
-    # Xử lý
     if prompt := st.chat_input("Nói gì đi..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -89,15 +87,18 @@ else:
         if API_KEY:
             try:
                 client = genai.Client(api_key=API_KEY)
-                # ĐÚNG MODEL CẬU CẦN: gemini-1.5-flash
+                # DÙNG MÃ NÀY LÀ MƯỢT NHẤT (TƯƠNG ĐƯƠNG 3.1 FAST CỦA CẬU)
                 res = client.models.generate_content(
                     model="gemini-1.5-flash",
                     contents=prompt,
-                    config={"system_instruction": "Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, cực kỳ thấu hiểu."}
+                    config={"system_instruction": "Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."}
                 )
                 bot_msg = res.text
             except Exception as e:
-                bot_msg = f"Hic, quota hết rồi. Chờ tớ tí nhé! (Lỗi: {str(e)[:40]}...)"
+                if "429" in str(e):
+                    bot_msg = "Hic, tớ hơi mệt (hết quota). Đợi tớ 1 phút nhé! 🌙"
+                else:
+                    bot_msg = f"Lỗi: {e}"
         else: bot_msg = "Chưa có API Key kìa!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
