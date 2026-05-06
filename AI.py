@@ -4,6 +4,7 @@ import os
 import json
 
 # --- 1. GIAO DIỆN ---
+st.write("API_KEY debug:", API_KEY)
 st.set_page_config(page_title="AI Soulmate", page_icon="🌙", layout="centered")
 st.markdown("""
     <style>
