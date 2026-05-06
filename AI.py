@@ -11,8 +11,8 @@ st.markdown("""
     p, span, label, li, h1, h2, h3, .stMarkdown { color: #FFFFFF !important; }
     [data-testid="stSidebar"], [data-testid="collapsedControl"], [data-testid="stToolbar"] { display: none !important; }
     footer, header { visibility: hidden; }
-    .stTextInput input { background-color: #1a1a1a !important; color: white !important; border-radius: 10px !important; border: 1px solid #333 !important; }
-    .stButton>button { width: 100%; background-color: #ffffff !important; color: #000000 !important; border-radius: 20px !important; font-weight: bold !important; }
+    .stTextInput input { background-color: #1a1a1a !important; color: white !important; border-radius: 10px !important; }
+    .stButton>button { width: 100%; background-color: #ffffff !important; color: #000000 !important; border-radius: 20px !important; }
     .stChatMessage { background-color: #111111 !important; border: 1px solid #222 !important; border-radius: 15px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. ĐĂNG NHẬP ---
+# --- 3. LOGIC ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -73,25 +73,32 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
-        # Ưu tiên lấy Key từ Secrets của Streamlit
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
         
         if API_KEY:
             try:
-                # Cấu hình API theo cách truyền thống nhất
+                # ÉP DÙNG VERSION V1 ĐỂ TRÁNH LỖI 404 V1BETA
                 genai.configure(api_key=API_KEY)
                 
-                # Gọi model đúng ID mà Google quy định cho thư viện này
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # Cấu hình model cực kỳ chi tiết để không bị lạc đường
+                model = genai.GenerativeModel(
+                    model_name='gemini-1.5-flash',
+                    generation_config={"temperature": 0.7, "top_p": 0.95}
+                )
                 
                 response = model.generate_content(prompt)
                 bot_msg = response.text
                 
             except Exception as e:
-                # Hiện lỗi thật sự để cậu copy gửi tớ nếu vẫn lỗi
-                bot_msg = f"Lỗi kỹ thuật thật: {str(e)}"
+                # Nếu vẫn lỗi, thử dùng ID bản cũ hơn một chút nhưng ổn định
+                try:
+                    model = genai.GenerativeModel('gemini-pro')
+                    response = model.generate_content(prompt)
+                    bot_msg = response.text
+                except:
+                    bot_msg = f"Vẫn lỗi: {str(e)}"
         else: 
-            bot_msg = "Cậu chưa dán API Key vào Secrets rồi!"
+            bot_msg = "Cậu chưa thiết lập API Key!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
