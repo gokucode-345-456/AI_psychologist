@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS: Giữ vibe đen tuyền, nút trắng, khóa sidebar
+# CSS: ĐEN TUYỀN, NÚT TRẮNG, KHÓA SIDEBAR
 st.markdown("""
     <style>
     .stApp { background-color: #000000 !important; }
@@ -19,13 +19,14 @@ st.markdown("""
     [data-testid="collapsedControl"] { display: none !important; }
     section[data-testid="stSidebar"] { background-color: #000000 !important; border-right: 1px solid #222; }
     
-    /* Nút trắng cho sidebar */
+    /* Nút trắng cho toàn bộ sidebar */
     div.stSidebar div.stButton > button {
         background-color: #FFFFFF !important;
         color: #000000 !important;
         border-radius: 10px;
         font-weight: bold;
         width: 100%;
+        border: none;
     }
     
     .stChatMessage { background-color: #111111 !important; border: 1px solid #222 !important; border-radius: 15px !important; }
@@ -34,7 +35,19 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. HỆ THỐNG LƯU TRỮ THEO USER ---
+# --- 2. HÀM QUẢN LÝ TÀI KHOẢN & LỊCH SỬ ---
+USER_DB = "users_db.json"
+
+def load_users():
+    if os.path.exists(USER_DB):
+        with open(USER_DB, "r") as f: return json.load(f)
+    return {}
+
+def save_user(username, password):
+    users = load_users()
+    users[username] = password
+    with open(USER_DB, "w") as f: json.dump(users, f)
+
 def get_history_file(username):
     return f"history_{username}.json"
 
@@ -45,65 +58,84 @@ def save_user_history(username, messages):
 def load_user_history(username):
     file_path = get_history_file(username)
     if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(file_path, "r", encoding="utf-8") as f: return json.load(f)
     return []
 
-# --- 3. ĐĂNG NHẬP (SIDEBAR) ---
+# --- 3. SIDEBAR: ĐĂNG KÝ & ĐĂNG NHẬP ---
 with st.sidebar:
-    st.title("🔐 Đăng nhập")
-    user_input = st.text_input("Tên định danh:", placeholder="Ví dụ: tung_nui")
-    pass_input = st.text_input("Mật mã tâm hồn:", type="password")
+    st.title("🌙 Soulmate Portal")
     
-    # Một số tài khoản mẫu (Ông có thể tự thêm ở đây)
-    USERS = {"admin": "123", "user1": "6789", "tung": "deptrai"}
+    # Tạo 2 tab trong Sidebar
+    tab_login, tab_signup = st.tabs(["Đăng nhập", "Đăng ký"])
+    
+    logged_in_user = None
 
-    logged_in = False
-    if user_input and pass_input:
-        if user_input in USERS and USERS[user_input] == pass_input:
-            logged_in = True
-            st.success(f"Chào mừng {user_input} quay lại!")
-        else:
-            st.error("Mật mã hoặc tên không đúng.")
+    with tab_signup:
+        new_user = st.text_input("Tạo tên định danh:", key="reg_user")
+        new_pass = st.text_input("Tạo mật mã:", type="password", key="reg_pass")
+        if st.button("Xác nhận đăng ký"):
+            users = load_users()
+            if new_user in users:
+                st.warning("Tên này có chủ rồi ông ơi!")
+            elif new_user and new_pass:
+                save_user(new_user, new_pass)
+                st.success("Đăng ký xong! Qua tab Đăng nhập đi.")
+            else:
+                st.error("Đừng để trống ô nào nhé.")
+
+    with tab_login:
+        user_name = st.text_input("Tên định danh:", key="log_user")
+        pass_word = st.text_input("Mật mã:", type="password", key="log_pass")
+        users = load_users()
+        if st.button("Vào thế giới tri kỷ"):
+            if user_name in users and users[user_name] == pass_word:
+                st.session_state.logged_in = True
+                st.session_state.current_user = user_name
+                st.success(f"Đã mở khóa tâm hồn cho {user_name}")
+                st.rerun()
+            else:
+                st.error("Sai tên hoặc mật mã rồi.")
 
     st.divider()
     
-    if logged_in:
+    # Nút chức năng khi đã đăng nhập
+    if st.session_state.get("logged_in"):
         if st.button("➕ Cuộc trò chuyện mới"):
             st.session_state.messages = []
-            save_user_history(user_input, [])
+            save_user_history(st.session_state.current_user, [])
+            st.rerun()
+        if st.button("🚪 Đăng xuất"):
+            st.session_state.logged_in = False
             st.rerun()
 
-# --- 4. XỬ LÝ CHAT ---
-if logged_in:
-    # Load lịch sử riêng của User đó
-    if "current_user" not in st.session_state or st.session_state.current_user != user_input:
-        st.session_state.current_user = user_input
-        st.session_state.messages = load_user_history(user_input)
+# --- 4. GIAO DIỆN CHAT ---
+if st.session_state.get("logged_in"):
+    user = st.session_state.current_user
+    
+    # Chỉ load lịch sử 1 lần khi vừa đăng nhập
+    if "messages" not in st.session_state or not st.session_state.messages:
+        st.session_state.messages = load_user_history(user)
 
-    st.title(f"🌙 Tri kỷ của {user_input}")
+    st.title(f"🌙 Tri kỷ của {user}")
 
-    # Hiển thị chat
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Nhập chat
-    if prompt := st.chat_input("Nói gì đi..."):
+    if prompt := st.chat_input("Trút bầu tâm sự..."):
         with st.chat_message("user"):
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # Gọi AI (Dùng API Key từ Env hoặc Code)
-        API_KEY = os.getenv("APIKEY") 
+        API_KEY = os.getenv("APIKEY")
         if not API_KEY:
-            st.warning("Thiếu API Key trong Environment!")
+            st.error("Quên chưa cài API Key rồi ông chủ ơi!")
         else:
             try:
                 client = genai.Client(api_key=API_KEY)
                 chat = client.chats.create(
                     model="gemini-3.1-flash-lite-preview",
-                    config={"system_instruction": "nhắn deep tí , nhưng cũng hòa đồng, vui vẻ , nếu giọng điệu người dùng có tí deep thì bạn cũng phải deep theo"},
+                    config={"system_instruction": "Bạn là tri kỷ deep. Xưng hô Mình - Bạn."},
                     history=[{"role": "user" if m["role"]=="user" else "model", "parts": [{"text": m["content"]}]} for m in st.session_state.messages[:-1]]
                 )
                 response = chat.send_message(prompt)
@@ -112,11 +144,8 @@ if logged_in:
                 with st.chat_message("assistant"):
                     st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
-                
-                # Lưu vào file riêng của User
-                save_user_history(user_input, st.session_state.messages)
+                save_user_history(user, st.session_state.messages)
             except Exception as e:
-                st.error(f"Lỗi AI: {e}")
+                st.error(f"Hư không lỗi: {e}")
 else:
-    st.info("🌙 đăng nhập mới đc dùng")
-    st.stop()
+    st.info("🌙 Hãy nhìn sang bên trái, Đăng ký hoặc Đăng nhập để bắt đầu.")
