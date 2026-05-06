@@ -112,7 +112,9 @@ def send_to_ai(prompt):
 
         # Tạo chat và gửi tin nhắn ngay lập tức
         chat = client.chats.create(
-            model="gemini-3.1-flash-lite-preview",
+            
+            # Thành dòng này:
+            model="gemini-1.5-flash",
             config={"system_instruction": instruction, "temperature": 0.85},
             history=gemini_history
         )
