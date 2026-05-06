@@ -7,7 +7,7 @@ st.set_page_config(page_title="AI Tâm Lý", page_icon="🌿")
 
 # 2. Kiểm tra API Key (Đảm bảo không bị crash ở đây)
 # Bạn hãy thay mã API thật của bạn vào chỗ "AIza..." bên dưới
-MY_API_KEY = "DÁN_MÃ_API_CỦA_BẠN_VÀO_ĐÂY" 
+API_KEY = "DÁN_MÃ_API_CỦA_BẠN_VÀO_ĐÂY" 
 
 def get_chat_session():
     if "chat" not in st.session_state:
