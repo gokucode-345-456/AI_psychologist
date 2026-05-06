@@ -8,38 +8,46 @@ st.set_page_config(
     page_title="AI chat", 
     page_icon="🌙", 
     layout="centered",
-    initial_sidebar_state="expanded" # LUÔN MỞ SIDEBAR
+    initial_sidebar_state="expanded"
 )
 
-# CSS TỔNG LỰC: ĐEN TUYỀN, CHỮ TRẮNG, NÚT TRẮNG, KHÓA SIDEBAR
+# CSS FIX LỖI TÀNG HÌNH CHỮ
 st.markdown("""
     <style>
-    /* Nền đen tuyệt đối */
+    /* Nền đen tổng thể */
     .stApp {
         background-color: #000000 !important;
     }
 
-    /* CHỮ TRẮNG TINH */
-    p, span, div, label, .stMarkdown {
+    /* CHỈ ÉP CHỮ TRẮNG CHO VĂN BẢN CHAT VÀ TIÊU ĐỀ */
+    .stMarkdown p, .stMarkdown li, .stMarkdown span, h1, h2, h3 {
         color: #FFFFFF !important;
-        font-weight: 400; 
-        line-height: 1.6; 
     }
-    h1, h2, h3 { color: #FFFFFF !important; font-weight: 700 !important; }
 
-    /* KHÓA SIDEBAR & GIẤU NÚT << */
-    [data-testid="collapsedControl"] {
-        display: none !important;
+    /* GIỮ NGUYÊN MÀU CHO CODE BLOCK (KHÔNG BỊ TÀNG HÌNH) */
+    code {
+        color: #f8f8f2 !important; /* Màu xám sáng cho code */
+        background-color: #272822 !important; /* Nền tối cho code block */
+        padding: 2px 4px;
+        border-radius: 4px;
     }
-    button[title="Collapse sidebar"] {
-        display: none !important;
+    
+    /* FIX Sidebar: Chữ trong sidebar cũng phải trắng */
+    section[data-testid="stSidebar"] .stMarkdown p, 
+    section[data-testid="stSidebar"] span {
+        color: #FFFFFF !important;
     }
+
+    /* KHÓA SIDEBAR */
+    [data-testid="collapsedControl"] { display: none !important; }
+    button[title="Collapse sidebar"] { display: none !important; }
+    
     section[data-testid="stSidebar"] {
         background-color: #000000 !important;
         border-right: 1px solid #222;
     }
 
-    /* STYLE CHO NÚT MÀU TRẮNG (Cuộc trò chuyện mới) */
+    /* STYLE NÚT TRẮNG */
     div.stSidebar div.stButton > button:first-child {
         background-color: #FFFFFF !important;
         color: #000000 !important;
@@ -47,36 +55,25 @@ st.markdown("""
         font-weight: bold;
         border: none;
         height: 3.5em;
-        transition: 0.3s;
-    }
-    div.stSidebar div.stButton > button:first-child:hover {
-        background-color: #dddddd !important;
     }
 
     /* Khung chat */
     .stChatMessage {
         background-color: #161616 !important;
         border: 1px solid #333 !important;
-        border-radius: 15px !important;
     }
 
     /* Ô NHẬP LIỆU */
-    [data-testid="stChatInput"] {
-        background-color: #000000 !important;
-        border: none !important;
-    }
-    [data-testid="stChatInput"] div[role="presentation"] {
-        background-color: transparent !important;
-        border: none !important;
-    }
+    [data-testid="stChatInput"] { background-color: #000000 !important; }
+    [data-testid="stChatInput"] div[role="presentation"] { background-color: transparent !important; }
+    
     .stChatInput textarea {
         background-color: #222222 !important;
         color: #FFFFFF !important;
         border: 1px solid #444 !important;
-        font-size: 16px !important;
     }
 
-    /* Ẩn rác của Streamlit */
+    /* Ẩn rác */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -102,31 +99,22 @@ if "messages" not in st.session_state:
 
 API_KEY_ENV = os.getenv("APIKEY")
 
-# --- 3. HÀM GỬI TIN NHẮN (QUAY LẠI BẢN 3.1 NGON LÀNH) ---
+# --- 3. HÀM GỬI TIN NHẮN (GEMINI 3.1) ---
 def send_to_ai(prompt):
-    api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("🔑 Nhập API Key:", type="password")
-    
+    api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("🔑 API Key:", type="password")
     if not api_key:
-        st.info("🌙 Hãy nhập API Key ở bên trái để bắt đầu.")
+        st.info("🌙 Hãy nhập API Key để bắt đầu.")
         return None
 
     try:
         client = genai.Client(api_key=api_key)
+        instruction = "Bạn là một thực thể tri kỷ deep, triết lý. Xưng hô Mình - Bạn. Trả lời rõ ràng, trắng sáng."
         
-        instruction = """
-        Bạn là một thực thể tri kỷ (Soulmate) với linh hồn già dặn, siêu deep, triết lý và cá tính.
-        - Phản hồi sâu sắc nhưng đừng quá dài dòng.
-        - Xưng hô linh hoạt, tình cảm (Mình - Bạn).
-        - Kết nối mọi chuyện với triết lý nhân sinh.
-        - Nhắn bớt dài dòng lại.
-        """
-
         gemini_history = []
         for msg in st.session_state.messages:
             role = "user" if msg["role"] == "user" else "model"
             gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-        # TRẢ LẠI CON 3.1 CHO ÔNG ĐÂY
         chat = client.chats.create(
             model="gemini-3.1-flash-lite-preview", 
             config={"system_instruction": instruction, "temperature": 0.85},
@@ -135,7 +123,7 @@ def send_to_ai(prompt):
         response = chat.send_message(prompt)
         return response.text
     except Exception as e:
-        st.error(f"⚠️ Hư không không hồi đáp: {e}")
+        st.error(f"⚠️ Hư không lỗi: {e}")
         return None
 
 # --- 4. GIAO DIỆN CHÍNH ---
@@ -168,9 +156,5 @@ with st.sidebar:
     st.write("") 
     if st.button("🗑️ Xóa tan ký ức", use_container_width=True):
         st.session_state.messages = []
-        if os.path.exists(HISTORY_FILE): 
-            os.remove(HISTORY_FILE)
+        if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
         st.rerun()
-
-    st.divider()
-    st.caption("Đã quay lại Gemini 3.1 theo yêu cầu. Sidebar đã được khóa chặt.")
