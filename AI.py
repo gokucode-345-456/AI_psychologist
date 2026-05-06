@@ -21,7 +21,6 @@ st.markdown("""
 API_KEY_ENV = os.getenv("APIKEY")
 
 def get_chat_session():
-    """Khởi tạo phiên chat với nhân cách Nhà Tâm Lý Học"""
     if "chat" not in st.session_state:
         # Lấy Key từ môi trường hoặc yêu cầu nhập ở Sidebar
         api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("Nhập Gemini API Key để bắt đầu:", type="password")
@@ -70,9 +69,9 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- 4. GIAO DIỆN CHÍNH ---
-st.title("🌿 Nhà Tâm Lý Trị Liệu AI")
+st.title("🌿AI chat")
 st.markdown("---")
-st.caption("Chào bạn, mình luôn ở đây để lắng nghe những tâm tư của bạn mà không phán xét.")
+st.caption("chia sẻ....")
 
 # Hiển thị lịch sử trò chuyện
 for message in st.session_state.messages:
