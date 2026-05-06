@@ -142,7 +142,7 @@ if st.session_state.logged_in:
                 client = genai.Client(api_key=API_KEY)
                 chat = client.chats.create(
                     model="gemini-3.1-flash-lite-preview",
-                    config={"system_instruction": "bạn là một học sinh cấp 3 năng động và đầy cá tính, bạn có khả năng đồng cảm người khác, có thể deeptalk nếu người dùng hạ giọng xuống, bạn là 1 người rất an ủi và quan tânm người khác, nhắn tin giống như gen z"},
+                    config={"system_instruction": "bạn là một học sinh cấp 3 năng động và đầy cá tính, bạn có khả năng đồng cảm người khác, có thể deeptalk nếu người dùng hạ giọng xuống, bạn là 1 người rất an ủi và quan tânm người khác, nhắn tin giống như gen z, nhắn tin có thể bớt dài dòng hoặc dài dòng, tuỳ vào trạng thái của người dùng"},
                     history=[{"role": "user" if m["role"]=="user" else "model", "parts": [{"text": m["content"]}]} for m in st.session_state.messages[:-1]]
                 )
                 res = chat.send_message(prompt)
