@@ -73,30 +73,36 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
+        # Lấy Key từ Secrets hoặc Env
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
+        
         if API_KEY:
             try:
                 genai.configure(api_key=API_KEY)
                 
-                # FIX 404: Dùng trực tiếp tên model không có prefix 'models/'
-                # Và cấu hình model qua GenerativeModel
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # DANH SÁCH CÁC CÁCH GỌI MODEL (THỬ TỪNG CÁI CHO ĐẾN KHI CHẠY)
+                model_names = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-1.5-flash-latest"]
+                bot_msg = ""
                 
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"top_p": 0.95, "temperature": 0.7}
-                )
-                bot_msg = response.text
+                for name in model_names:
+                    try:
+                        model = genai.GenerativeModel(
+                            model_name=name,
+                            system_instruction="Bạn là gen Z, nhắn tin ngắn gọn, thấu hiểu."
+                        )
+                        response = model.generate_content(prompt)
+                        bot_msg = response.text
+                        if bot_msg: break # Nếu có phản hồi thì dừng lại
+                    except Exception as inner_e:
+                        continue # Nếu lỗi thì thử tên tiếp theo
+                
+                if not bot_msg:
+                    bot_msg = "Tớ đã thử hết các cách gọi model nhưng Google vẫn báo 404. Cậu kiểm tra lại xem API Key có bị giới hạn vùng miền (Region) không nhé."
+
             except Exception as e:
-                # Nếu vẫn lỗi, thử dùng tên model đầy đủ hơn
-                try:
-                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                    response = model.generate_content(prompt)
-                    bot_msg = response.text
-                except:
-                    bot_msg = f"Vẫn bị lỗi 404 rồi cậu. Thử kiểm tra API Key trong Secrets xem sao nhé!"
+                bot_msg = f"Lỗi không xác định: {str(e)[:100]}"
         else: 
-            bot_msg = "Cậu chưa thiết lập API Key trong Secrets hoặc Env!"
+            bot_msg = "Thiếu API Key! Cậu hãy vào Settings -> Secrets trên Streamlit Cloud dán APIKEY = 'mã_của_cậu' vào nhé."
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
