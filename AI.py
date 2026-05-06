@@ -114,7 +114,8 @@ def send_to_ai(prompt):
         chat = client.chats.create(
             
             # Thành dòng này:
-            model="gemini-1.5-flash",
+            # Sửa dòng model thành:
+            model="models/gemini-1.5-flash",
             config={"system_instruction": instruction, "temperature": 0.85},
             history=gemini_history
         )
