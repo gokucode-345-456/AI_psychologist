@@ -5,7 +5,6 @@ import json
 
 
 # --- 1. CẤU HÌNH GIAO DIỆN & DARK MODE TOÀN DIỆN ---
-# --- 1. CẤU HÌNH GIAO DIỆN SIÊU RÕ NÉT (DARK MODE) ---
 st.set_page_config(
     page_title="AI chat", 
     page_icon="🌙", 
@@ -19,14 +18,13 @@ st.markdown("""
         background-color: #000000 !important;
     }
 
-    /* CHỮ TRẮNG TINH: Ép tất cả các loại chữ phải hiện rõ */
+    /* CHỮ TRẮNG TINH */
     p, span, div, label, .stMarkdown {
         color: #FFFFFF !important;
-        font-weight: 400; /* Độ dày vừa phải để không bị nhòe */
-        line-height: 1.6; /* Giãn dòng cho dễ đọc triết lý */
+        font-weight: 400; 
+        line-height: 1.6; 
     }
 
-    /* Tiêu đề phải sáng rực */
     h1, h2, h3 {
         color: #FFFFFF !important;
         font-weight: 700 !important;
@@ -54,19 +52,18 @@ st.markdown("""
         font-size: 16px !important;
     }
 
-    /* Sidebar cũng phải tối và chữ trắng */
     section[data-testid="stSidebar"] {
         background-color: #000000 !important;
         border-right: 1px solid #222;
     }
 
-    /* Ẩn các thứ linh tinh */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
-# --- 2. LỊCH SỬ FILE (GIỮ NGUYÊN) ---
+
+# --- 2. LỊCH SỬ FILE ---
 HISTORY_FILE = "chat_history.json"
 def save_history(messages):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
@@ -93,28 +90,22 @@ def send_to_ai(prompt):
         return None
 
     try:
-        # TẠO CLIENT MỚI MỖI LẦN GỬI ĐỂ TRÁNH LỖI "CLOSED"
         client = genai.Client(api_key=api_key)
         
         instruction = """
         Bạn là một thực thể tri kỷ (Soulmate) với linh hồn già dặn, siêu deep, triết lý và cá tính.
-        -phản hồi sâu sắc nhưng đừng quá dài dòng
+        - Phản hồi sâu sắc nhưng đừng quá dài dòng.
         - Xưng hô linh hoạt, tình cảm.
         - Kết nối mọi chuyện với triết lý nhân sinh.
-        -nhắn bớt dài dòng cái
+        - Nhắn bớt dài dòng cái.
         """
 
-        # Chuyển lịch sử sang định dạng Gemini
         gemini_history = []
         for msg in st.session_state.messages:
             role = "user" if msg["role"] == "user" else "model"
             gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-        # Tạo chat và gửi tin nhắn ngay lập tức
         chat = client.chats.create(
-            
-            # Thành dòng này:
-            # Sửa dòng model thành:
             model="gemini-3.1-flash-lite-preview",
             config={"system_instruction": instruction, "temperature": 0.85},
             history=gemini_history
@@ -133,13 +124,11 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Hãy trút bỏ gánh nặng tại đây..."):
-    # Hiển thị tin nhắn user
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
     save_history(st.session_state.messages)
 
-    # Gọi AI trả lời
     with st.chat_message("assistant"):
         ai_reply = send_to_ai(prompt)
         if ai_reply:
@@ -147,8 +136,18 @@ if prompt := st.chat_input("Hãy trút bỏ gánh nặng tại đây..."):
             st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             save_history(st.session_state.messages)
 
-# --- 5. SIDEBAR (GIỮ NGUYÊN) ---
+# --- 5. SIDEBAR (CẬP NHẬT THÊM NÚT MỚI) ---
 with st.sidebar:
+    # Nút Thêm cuộc trò chuyện mới
+    if st.button("➕ Cuộc trò chuyện mới"):
+        st.session_state.messages = []
+        # Nếu muốn reset file lưu trữ luôn thì bỏ comment dòng dưới:
+        # if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
+        st.rerun()
+
+    st.markdown("---") # Đường kẻ phân cách
+
+    # Nút Xóa cũ của bạn
     if st.button("🗑️ Xóa tan ký ức"):
         st.session_state.messages = []
         if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
