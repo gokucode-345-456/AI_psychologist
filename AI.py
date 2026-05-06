@@ -58,7 +58,12 @@ st.markdown("""
         background-color: #222222 !important;
         color: #FFFFFF !important;
     }
-
+    st.set_page_config(
+    page_title="AI chat", 
+    page_icon="🌙", 
+    layout="centered",
+    initial_sidebar_state="expanded" # ÉP SIDEBAR LUÔN MỞ KHI CHẠY
+)
     /* Ẩn rác giao diện */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
