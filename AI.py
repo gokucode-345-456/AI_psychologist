@@ -6,12 +6,12 @@ import os
 st.set_page_config(page_title="AI Tâm Lý", page_icon="🌿")
 
 # 2. Kiểm tra API Key (Đảm bảo không bị crash ở đây)
-MY_API_KEY = APIKEY
+
 
 def get_chat_session():
     if "chat" not in st.session_state:
         try:
-            client = genai.Client(api_key=MY_API_KEY)
+            client = genai.Client(api_key=APIKEY)
             # Khởi tạo chat với bản ổn định trước để test
             st.session_state.chat = client.chats.create(model="gemini-1.5-flash")
             st.session_state.client_instance = client
