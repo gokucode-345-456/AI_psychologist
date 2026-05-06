@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # --- CẤU HÌNH GOOGLE GEMINI ---
-genai.configure(api_key="AIzaSyDEn5F9GJubODx_JfpL8JvuBDDjRP2mpSE")
+genai.configure(api_key="APIKEY")
 
 # Cấu hình model với chỉ dẫn về tâm lý học (System Instruction)
 generation_config = {
