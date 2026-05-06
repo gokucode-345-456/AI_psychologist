@@ -14,64 +14,40 @@ st.set_page_config(
 # ÉP TOÀN BỘ GIAO DIỆN SANG MÀU ĐEN (CHỐNG LỖI VIỀN TRẮNG)
 st.markdown("""
     <style>
-    /* 1. Nền tổng thể của App */
-    .stApp {
-        background-color: #000000 !important;
-        color: #FFFFFF !important;
-    }
-    
-    /* 2. Ép thanh Header (cái dải ở trên cùng) sang màu đen */
-    header[data-testid="stHeader"] {
-        background-color: #000000 !important;
-    }
+    .stApp { background-color: #000000 !important; color: #FFFFFF !important; }
+    header[data-testid="stHeader"] { background-color: #000000 !important; }
+    p, span, label, div { color: #FFFFFF !important; }
 
-    /* 3. Chỉnh màu chữ mặc định sang trắng */
-    p, span, label, div {
-        color: #FFFFFF !important;
-    }
-
-    /* 4. Tùy chỉnh khung chứa tin nhắn chat */
     .stChatMessage {
-        background-color: #121212 !important; /* Xám cực tối cho tin nhắn */
+        background-color: #121212 !important;
         border-radius: 15px;
         border: 1px solid #222;
         margin-bottom: 10px;
     }
 
-    /* 5. Tùy chỉnh Sidebar (Thanh bên trái) */
     section[data-testid="stSidebar"] {
         background-color: #000000 !important;
         border-right: 1px solid #333;
     }
 
-    /* 6. Tùy chỉnh ô nhập liệu (Chat Input) */
+    /* ĐOẠN NÀY LÀM GỌN Ô CHAT INPUT */
     [data-testid="stChatInput"] {
-        background-color: #000000 !important;
-        padding-bottom: 20px;
+        background-color: transparent !important;
+        max-width: 650px !important; 
+        margin: 0 auto !important;
+        padding-bottom: 40px !important;
     }
     
     .stChatInput textarea {
         background-color: #1E1E1E !important;
         color: #FFFFFF !important;
-        border: 1px solid #444 !important;
+        border-radius: 20px !important;
+        border: 1px solid #333 !important;
     }
 
-    /* 7. Ẩn các thành phần thừa của Streamlit cho chuyên nghiệp */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* 8. Chỉnh màu nút bấm cho cá tính */
-    .stButton>button {
-        background-color: #1E1E1E;
-        color: white;
-        border: 1px solid #444;
-        border-radius: 10px;
-    }
-    .stButton>button:hover {
-        border-color: #FFFFFF;
-        background-color: #333;
-    }
     </style>
     """, unsafe_allow_html=True)
 
