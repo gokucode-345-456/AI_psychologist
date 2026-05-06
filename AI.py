@@ -14,43 +14,39 @@ st.set_page_config(
 # ÉP TOÀN BỘ GIAO DIỆN SANG MÀU ĐEN (CHỐNG LỖI VIỀN TRẮNG)
 st.markdown("""
     <style>
-    .stApp { background-color: #000000 !important; color: #FFFFFF !important; }
-    header[data-testid="stHeader"] { background-color: #000000 !important; }
-    p, span, label, div { color: #FFFFFF !important; }
-
-    .stChatMessage {
-        background-color: #121212 !important;
-        border-radius: 15px;
-        border: 1px solid #222;
-        margin-bottom: 10px;
-    }
-
-    section[data-testid="stSidebar"] {
+    /* Nền tổng thể */
+    .stApp {
         background-color: #000000 !important;
-        border-right: 1px solid #333;
     }
 
-    /* ĐOẠN NÀY LÀM GỌN Ô CHAT INPUT */
+    /* Xóa Header và các khoảng trắng thừa */
+    header[data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0) !important;
+    }
+    
+    /* Ô NHẬP LIỆU - PHẦN QUAN TRỌNG NHẤT */
     [data-testid="stChatInput"] {
+        background-color: #000000 !important;
+    }
+
+    /* Xóa cái viền trắng bao quanh mà bạn thấy trong hình */
+    [data-testid="stChatInput"] div[role="presentation"] {
         background-color: transparent !important;
-        max-width: 650px !important; 
-        margin: 0 auto !important;
-        padding-bottom: 40px !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     .stChatInput textarea {
         background-color: #1E1E1E !important;
         color: #FFFFFF !important;
-        border-radius: 20px !important;
-        border: 1px solid #333 !important;
+        border: 1px solid #444 !important;
     }
 
-    #MainMenu {visibility: hidden;}
+    /* Ẩn các thành phần giao diện mặc định để app trông 'deep' hơn */
+    [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
-
 # --- 2. LỊCH SỬ FILE (GIỮ NGUYÊN) ---
 HISTORY_FILE = "chat_history.json"
 def save_history(messages):
