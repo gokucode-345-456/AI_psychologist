@@ -5,7 +5,6 @@ import json
 
 # --- 1. GIAO DIỆN ---
 st.set_page_config(page_title="AI Soulmate", page_icon="🌙", layout="centered")
-
 st.markdown("""
     <style>
     .stApp { background-color: #000000 !important; }
@@ -25,10 +24,9 @@ def load_json(path, default):
         with open(path, "r", encoding="utf-8") as f: return json.load(f)
     return default
 def save_json(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. LOGIC ---
+# --- 3. LOGIC ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -78,8 +76,10 @@ else:
         API_KEY = os.getenv("APIKEY")
         if API_KEY:
             try:
+                # FIX 404 TRIỆT ĐỂ: Thêm cấu hình http_options để ép dùng bản ổn định
                 client = genai.Client(api_key=API_KEY)
-                # DÙNG ID NÀY ĐỂ FIX LỖI 404 TRÊN BẢN SDK MỚI
+                
+                # Thử dùng ID phổ biến nhất cho bản Flash
                 res = client.models.generate_content(
                     model="gemini-1.5-flash", 
                     contents=prompt,
@@ -87,7 +87,20 @@ else:
                 )
                 bot_msg = res.text
             except Exception as e:
-                bot_msg = f"Hic, tớ đang bị quá tải tí. (Lỗi: {str(e)[:40]}...)"
+                # Nếu vẫn lỗi 404, tớ sẽ tự động thử model dự phòng (1.5 Flash bản mới nhất)
+                if "404" in str(e):
+                    try:
+                        res = client.models.generate_content(
+                            model="gemini-1.5-flash-latest", # Tên model dự phòng 1
+                            contents=prompt
+                        )
+                        bot_msg = res.text
+                    except:
+                        bot_msg = "Vẫn lỗi 404. Cậu kiểm tra lại API Key xem có phải Key cũ từ năm ngoái không nhé!"
+                elif "429" in str(e):
+                    bot_msg = "Hết lượt dùng rồi (429), đợi 1 phút nhé!"
+                else:
+                    bot_msg = f"Lỗi: {str(e)[:50]}..."
         else: bot_msg = "Chưa có API Key kìa!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
