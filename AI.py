@@ -115,7 +115,7 @@ def send_to_ai(prompt):
             
             # Thành dòng này:
             # Sửa dòng model thành:
-            model="models/gemini-1.5-flash",
+            model="gemini-1.5-flash",
             config={"system_instruction": instruction, "temperature": 0.85},
             history=gemini_history
         )
