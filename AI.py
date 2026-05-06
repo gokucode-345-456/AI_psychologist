@@ -71,7 +71,14 @@ st.markdown("""
         background-color: #222222 !important;
         color: #FFFFFF !important;
         border: 1px solid #444 !important;
+        
     }
+    st.set_page_config(
+        page_title="Nhà Tâm Lý Tri Kỷ",
+        page_icon="🌙", # Đây sẽ là icon hiển thị thay vì cái ảnh to đùng
+        layout="centered",
+        initial_sidebar_state="expanded"
+    )
 
     /* Ẩn rác */
     [data-testid="stToolbar"] {display: none;}
