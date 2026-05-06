@@ -72,7 +72,7 @@ else:
     if prompt := st.chat_input("Nói gì đi..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
-        st.write("API_KEY:", API_KEY)
+     
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
         
         if API_KEY:
