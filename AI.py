@@ -18,45 +18,48 @@ st.markdown("""
         background-color: #000000 !important;
     }
 
-    /* CHỮ TRẮNG TINH */
+    /* Chữ trắng rõ nét */
     p, span, div, label, .stMarkdown {
         color: #FFFFFF !important;
-        font-weight: 400; 
-        line-height: 1.6; 
     }
 
-    h1, h2, h3 {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-    }
-
-    .stChatMessage {
-        background-color: #161616 !important;
-        border: 1px solid #333 !important;
-        border-radius: 15px !important;
-    }
-    [data-testid="stChatInput"] {
-        background-color: #000000 !important;
-        border: none !important;
-    }
-    
-    [data-testid="stChatInput"] div[role="presentation"] {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
-    .stChatInput textarea {
-        background-color: #222222 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #444 !important;
-        font-size: 16px !important;
-    }
-
+    /* Sidebar luôn hiện và giấu nút đóng << */
     section[data-testid="stSidebar"] {
         background-color: #000000 !important;
         border-right: 1px solid #222;
     }
+    
+    /* ĐÂY NÈ: Giấu cái nút << khó chịu đó đi */
+    button[title="Collapse sidebar"] {
+        display: none !important;
+    }
 
+    /* Nút Cuộc trò chuyện mới màu trắng */
+    div.stButton > button:first-child {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border-radius: 10px;
+        font-weight: bold;
+        border: none;
+    }
+
+    /* Khung chat */
+    .stChatMessage {
+        background-color: #161616 !important;
+        border: 1px solid #333 !important;
+    }
+
+    /* Ô nhập liệu */
+    [data-testid="stChatInput"] {
+        background-color: #000000 !important;
+    }
+    
+    .stChatInput textarea {
+        background-color: #222222 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Ẩn rác giao diện */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
