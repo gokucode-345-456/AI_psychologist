@@ -75,7 +75,7 @@ else:
         with st.chat_message("user"): st.markdown(prompt)
      
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
-        st.write(API_KEY)
+     
         
         if API_KEY:
             try:
