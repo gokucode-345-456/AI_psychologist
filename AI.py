@@ -4,7 +4,7 @@ import os
 
 # --- 1. CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(
-    page_title="Nhà Tâm Lý Trị Liệu AI", 
+    page_title="AI chat", 
     page_icon="🌿", 
     layout="centered"
 )
@@ -42,7 +42,10 @@ def get_chat_session():
             - Đặt câu hỏi gợi mở để người dùng tự thấu hiểu bản thân.
             - Tuyệt đối không đưa ra lời khuyên máy móc kiểu "Bạn nên làm thế này".
             - Ngôn ngữ tiếng Việt nhẹ nhàng, xưng "Mình" và "Bạn".
-            - Nếu người dùng có ý định tự hại, hãy nhẹ nhàng khuyên họ liên hệ hotline hỗ trợ tâm lý hoặc cơ sở y tế gần nhất.
+            - Nếu người dùng có ý định tự hại, hãy nhẹ nhàng khuyên họ liên hệ hotline hỗ trợ tâm lý hoặc cơ sở y tế gần nhất
+            _ nhắn tin cảm xúc nhiều hơn đi
+            _nhắn tin cũng phải có 1 tí cá tính nghen 
+            _vừa cá tính mà vừa đồng cảm với người khác
             """
 
             # Khởi tạo phiên chat với cấu hình nhân cách
