@@ -1,8 +1,8 @@
+```python
 import streamlit as st
 import requests
 import os
 import json
-
 
 # --- 1. GIAO DIỆN ---
 st.set_page_config(page_title="AI Soulmate", page_icon="🌙", layout="centered")
@@ -20,21 +20,27 @@ st.markdown("""
 
 # --- 2. LƯU TRỮ ---
 USER_DB = "users_db.json"
+
 def load_json(path, default):
     if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f: return json.load(f)
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
     return default
+
 def save_json(path, data):
-    with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
 # --- 3. LOGIC ĐĂNG NHẬP ---
-if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
     st.markdown("<br><h1 style='text-align: center;'>🌙 AI Soulmate</h1>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         tab_l, tab_r = st.tabs(["Đăng nhập", "Đăng ký"])
+
         with tab_l:
             u = st.text_input("Tên", key="l_u")
             p = st.text_input("Mật mã", type="password", key="l_p")
@@ -45,7 +51,9 @@ if not st.session_state.logged_in:
                     st.session_state.current_user = u
                     st.session_state.messages = load_json(f"history_{u}.json", [])
                     st.rerun()
-                else: st.error("Sai rồi kìa!")
+                else:
+                    st.error("Sai rồi kìa!")
+
         with tab_r:
             nu = st.text_input("Tên mới", key="r_u")
             np = st.text_input("Mật mã mới", type="password", key="r_p")
@@ -55,50 +63,74 @@ if not st.session_state.logged_in:
                     db[nu] = np
                     save_json(USER_DB, db)
                     st.success("Xong! Qua đăng nhập nhé.")
+
 else:
     user = st.session_state.current_user
+
     if "messages" not in st.session_state:
         st.session_state.messages = load_json(f"history_{user}.json", [])
 
     c1, c2 = st.columns([5, 1])
-    with c1: st.title(f"🌙 Tri kỷ của {user}")
-    with c2: 
+    with c1:
+        st.title(f"🌙 Tri kỷ của {user}")
+    with c2:
         if st.button("Thoát"):
             st.session_state.logged_in = False
             st.rerun()
 
     for m in st.session_state.messages:
-        with st.chat_message(m["role"]): st.markdown(m["content"])
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
 
     if prompt := st.chat_input("Nói gì đi..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-     
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
-     
-        
+
         if API_KEY:
             try:
-                # ÉP DÙNG ENDPOINT /v1 (THAY VÌ v1beta) ĐỂ FIX LỖI 404
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
-                headers = {'Content-Type': 'application/json'}
-                data = {
-                    "contents": [{"parts": [{"text": prompt}]}]
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+                headers = {
+                    "Content-Type": "application/json"
                 }
-                
-                response = requests.post(url, headers=headers, json=data)
-                res_json = response.json()
-                
+
+                params = {
+                    "key": API_KEY
+                }
+
+                data = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt}
+                            ]
+                        }
+                    ]
+                }
+
+                response = requests.post(url, headers=headers, params=params, json=data)
+
                 if response.status_code == 200:
-                    bot_msg = res_json['candidates'][0]['content']['parts'][0]['text']
+                    res_json = response.json()
+                    bot_msg = res_json["candidates"][0]["content"]["parts"][0]["text"]
                 else:
-                    bot_msg = f"Lỗi từ Google ({response.status_code}): {res_json.get('error', {}).get('message', 'Không rõ lỗi')}"
-                
+                    try:
+                        err = response.json()
+                        bot_msg = f"Lỗi từ Google ({response.status_code}): {err.get('error', {}).get('message')}"
+                    except:
+                        bot_msg = f"Lỗi HTTP {response.status_code}: {response.text}"
+
             except Exception as e:
                 bot_msg = f"Lỗi hệ thống: {str(e)}"
-        else: 
+        else:
             bot_msg = "Cậu chưa thiết lập API Key trong Secrets!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
-        with st.chat_message("assistant"): st.markdown(bot_msg)
+        with st.chat_message("assistant"):
+            st.markdown(bot_msg)
+
         save_json(f"history_{user}.json", st.session_state.messages)
+```
