@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
 import os
 import json
 
@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. LOGIC ĐĂNG NHẬP ---
+# --- 3. ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -77,28 +77,26 @@ else:
         
         if API_KEY:
             try:
-                # ÉP DÙNG VERSION V1 ĐỂ TRÁNH LỖI 404 V1BETA
-                genai.configure(api_key=API_KEY)
+                # GỬI TRỰC TIẾP QUA HTTP REQUEST (BỎ QUA THƯ VIỆN LỖI)
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+                headers = {'Content-Type': 'application/json'}
+                data = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "systemInstruction": {"parts": [{"text": "Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."}]}
+                }
                 
-                # Cấu hình model cực kỳ chi tiết để không bị lạc đường
-                model = genai.GenerativeModel(
-                    model_name='gemini-1.5-flash',
-                    generation_config={"temperature": 0.7, "top_p": 0.95}
-                )
+                response = requests.post(url, headers=headers, json=data)
+                res_json = response.json()
                 
-                response = model.generate_content(prompt)
-                bot_msg = response.text
+                if response.status_code == 200:
+                    bot_msg = res_json['candidates'][0]['content']['parts'][0]['text']
+                else:
+                    bot_msg = f"Lỗi từ Google ({response.status_code}): {res_json.get('error', {}).get('message', 'Không rõ lỗi')}"
                 
             except Exception as e:
-                # Nếu vẫn lỗi, thử dùng ID bản cũ hơn một chút nhưng ổn định
-                try:
-                    model = genai.GenerativeModel('gemini-pro')
-                    response = model.generate_content(prompt)
-                    bot_msg = response.text
-                except:
-                    bot_msg = f"Vẫn lỗi: {str(e)}"
+                bot_msg = f"Lỗi hệ thống: {str(e)}"
         else: 
-            bot_msg = "Cậu chưa thiết lập API Key!"
+            bot_msg = "Cậu chưa thiết lập API Key trong Secrets!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
