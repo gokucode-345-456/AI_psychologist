@@ -2,82 +2,107 @@ import streamlit as st
 from google import genai
 import os
 
-# 1. Cấu hình trang - Hiển thị đẹp hơn trên trình duyệt
-st.set_page_config(page_title="AI Tâm Lý", page_icon="🌿", layout="centered")
+# --- 1. CẤU HÌNH GIAO DIỆN ---
+st.set_page_config(
+    page_title="Nhà Tâm Lý Trị Liệu AI", 
+    page_icon="🌿", 
+    layout="centered"
+)
 
-# 2. Quản lý API Key
-# Ưu tiên lấy từ biến môi trường hệ thống (An toàn, không lo bị lộ Key)
+# Thêm một chút CSS để giao diện mềm mại hơn
+st.markdown("""
+    <style>
+    .stApp { background-color: #f8f9fa; }
+    .stChatMessage { border-radius: 20px; margin-bottom: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 2. QUẢN LÝ API KEY ---
 API_KEY_ENV = os.getenv("APIKEY")
 
 def get_chat_session():
-    """Khởi tạo hoặc lấy lại phiên chat hiện tại"""
+    """Khởi tạo phiên chat với nhân cách Nhà Tâm Lý Học"""
     if "chat" not in st.session_state:
-        # Nếu không có Key trong môi trường, yêu cầu nhập ở Sidebar
-        api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("Nhập Gemini API Key:", type="password")
+        # Lấy Key từ môi trường hoặc yêu cầu nhập ở Sidebar
+        api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("Nhập Gemini API Key để bắt đầu:", type="password")
         
         if not api_key:
-            st.warning("Vui lòng cấu hình API Key để bắt đầu trò chuyện.")
+            st.info("💡 Vui lòng nhập API Key ở thanh bên trái để trò chuyện cùng chuyên gia.")
             return None
             
         try:
             client = genai.Client(api_key=api_key)
-            # Sử dụng Gemini 3.1 Flash Lite Preview theo ý bạn
-            # Nếu bản này lỗi, có thể đổi về "gemini-1.5-flash"
-            model_id = "gemini-3.1-flash-lite-preview" 
             
-            st.session_state.chat = client.chats.create(model=model_id)
+            # ĐỊNH NGHĨA NHÂN CÁCH (SYSTEM INSTRUCTION)
+            psychologist_instruction = """
+            Bạn là một nhà tâm lý học lâm sàng thấu cảm, ấm áp và kiên nhẫn. 
+            Phong cách trò chuyện của bạn:
+            - Luôn lắng nghe chân thành, không phán xét.
+            - Sử dụng các kỹ thuật như phản hồi cảm xúc ("Mình nghe thấy sự lo lắng trong lời kể của bạn...")
+            - Đặt câu hỏi gợi mở để người dùng tự thấu hiểu bản thân.
+            - Tuyệt đối không đưa ra lời khuyên máy móc kiểu "Bạn nên làm thế này".
+            - Ngôn ngữ tiếng Việt nhẹ nhàng, xưng "Mình" và "Bạn".
+            - Nếu người dùng có ý định tự hại, hãy nhẹ nhàng khuyên họ liên hệ hotline hỗ trợ tâm lý hoặc cơ sở y tế gần nhất.
+            """
+
+            # Khởi tạo phiên chat với cấu hình nhân cách
+            st.session_state.chat = client.chats.create(
+                model="gemini-3.1-flash-lite-preview",
+                config={
+                    "system_instruction": psychologist_instruction,
+                    "temperature": 0.7, # Tăng độ sáng tạo và cảm xúc
+                }
+            )
             st.session_state.client_instance = client
-            st.sidebar.success(f"Đang dùng: {model_id}")
         except Exception as e:
-            st.error(f"Lỗi khởi tạo AI: {e}")
+            st.error(f"Lỗi khởi tạo: {e}")
             return None
     return st.session_state.chat
 
-# 3. Khởi tạo bộ nhớ tin nhắn
+# --- 3. KHỞI TẠO BỘ NHỚ ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- GIAO DIỆN ---
-st.title("🌿 Người Bạn Tâm Trí")
-st.caption("Lắng nghe và chia sẻ cùng bạn mọi lúc.")
+# --- 4. GIAO DIỆN CHÍNH ---
+st.title("🌿 Nhà Tâm Lý Trị Liệu AI")
+st.markdown("---")
+st.caption("Chào bạn, mình luôn ở đây để lắng nghe những tâm tư của bạn mà không phán xét.")
 
-# Hiển thị lịch sử chat từ bộ nhớ
+# Hiển thị lịch sử trò chuyện
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. Xử lý nhập liệu từ người dùng
-if prompt := st.chat_input("Hôm nay bạn thấy thế nào?"):
-    # Hiển thị tin nhắn của User ngay lập tức
+# --- 5. XỬ LÝ TIN NHẮN ---
+if prompt := st.chat_input("Hôm nay bạn cảm thấy thế nào?"):
+    # Hiển thị tin nhắn User
     with st.chat_message("user"):
         st.markdown(prompt)
-    
-    # Lưu vào lịch sử để không bị mất khi Streamlit rerun
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Lấy phiên chat và gửi tin nhắn cho AI
+    # Gọi AI trả lời
     chat = get_chat_session()
     if chat:
         with st.chat_message("assistant"):
             try:
-                # Gửi tin nhắn và nhận phản hồi
                 response = chat.send_message(prompt)
                 ai_reply = response.text
                 
                 st.markdown(ai_reply)
-                # Lưu phản hồi AI vào lịch sử
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             except Exception as e:
-                st.error(f"AI không trả lời được: {e}")
-                # Nếu lỗi do Client bị đóng, xóa session để khởi tạo lại ở lần tới
+                st.error(f"⚠️ Có lỗi xảy ra: {e}")
                 if "closed" in str(e).lower():
                     del st.session_state.chat
 
-# Tùy chọn xóa hội thoại ở Sidebar
+# --- 6. SIDEBAR TÙY CHỌN ---
 with st.sidebar:
-    st.divider()
-    if st.button("Xóa lịch sử trò chuyện"):
+    st.header("Cấu hình")
+    if st.button("🗑️ Xóa cuộc hội thoại"):
         st.session_state.messages = []
         if "chat" in st.session_state:
             del st.session_state.chat
         st.rerun()
+    
+    st.divider()
+    st.write("📌 **Lưu ý:** AI không thể thay thế hoàn toàn chuyên gia y tế trong các trường hợp khẩn cấp.")
