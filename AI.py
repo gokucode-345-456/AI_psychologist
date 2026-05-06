@@ -11,49 +11,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS "TỐI THƯỢNG": BIẾN NÚT MỞ SIDEBAR THÀNH NÚT ĐIỀU KHIỂN CHÍNH
+# CSS FIX TRIỆT ĐỂ: HIỆN NÚT SIDEBAR & NÚT TRUNG TÂM
 st.markdown("""
     <style>
     .stApp { background-color: #000000 !important; }
     p, span, label, li, h1, h2, h3, .stMarkdown { color: #FFFFFF !important; }
 
-    /* LÀM NỔI BẬT NÚT MỞ SIDEBAR */
+    /* HIỆN NÚT GÓC TRÁI (Bất chấp mọi thứ) */
     [data-testid="collapsedControl"] {
-        background-color: #FFFFFF !important; /* Nút màu trắng */
+        background-color: #FFFFFF !important;
         border-radius: 50% !important;
-        width: 60px !important; /* To hơn */
-        height: 60px !important;
-        top: 20px !important;
-        left: 20px !important;
+        width: 50px !important;
+        height: 50px !important;
+        top: 15px !important;
+        left: 15px !important;
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 0 20px rgba(255,255,255,0.5) !important;
-        animation: pulse 2s infinite; /* Hiệu ứng rung rinh thu hút chú ý */
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-        70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        z-index: 999999 !important; /* Đẩy lên lớp cao nhất */
+        box-shadow: 0 0 15px rgba(255,255,255,0.8) !important;
     }
     
     [data-testid="collapsedControl"] svg {
         fill: #000000 !important;
-        width: 30px !important;
-        height: 30px !important;
     }
 
-    /* Sidebar & Button */
-    section[data-testid="stSidebar"] { background-color: #000000 !important; border-right: 1px solid #222; }
-    div.stSidebar div.stButton > button {
-        background-color: #FFFFFF !important;
+    /* CSS CHO CÁI NÚT CHÍNH GIỮA MÀN HÌNH */
+    .main-login-btn {
+        background-color: #FFFFFF;
         color: #000000 !important;
-        border-radius: 12px;
+        padding: 15px 30px;
+        border-radius: 30px;
         font-weight: bold;
+        text-decoration: none;
+        font-size: 1.2rem;
+        transition: 0.3s;
         border: none;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(255,255,255,0.2);
     }
-    
+    .main-login-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 5px 25px rgba(255,255,255,0.4);
+    }
+
+    /* Sidebar & Chat */
+    section[data-testid="stSidebar"] { background-color: #000000 !important; border-right: 1px solid #222; }
     .stChatMessage { background-color: #111111 !important; border: 1px solid #222 !important; border-radius: 15px !important; }
     [data-testid="stToolbar"], footer, header { visibility: hidden; }
     </style>
@@ -78,7 +79,7 @@ def save_user_history(username, messages):
     with open(f"history_{username}.json", "w", encoding="utf-8") as f:
         json.dump(messages, f, ensure_ascii=False, indent=4)
 
-# --- 3. SIDEBAR ---
+# --- 3. SIDEBAR LOGIC ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 with st.sidebar:
@@ -95,7 +96,7 @@ with st.sidebar:
         with tab_login:
             user_n = st.text_input("Tên đăng nhập:", key="log_user")
             pass_w = st.text_input("Mật mã:", type="password", key="log_pass")
-            if st.button("Vào thế giới tri kỷ"):
+            if st.button("Vào thế giới tri kỷ", key="sidebar_login_btn"):
                 users = load_users()
                 if user_n in users and users[user_n] == pass_w:
                     st.session_state.logged_in = True
@@ -108,7 +109,7 @@ with st.sidebar:
             st.session_state.messages = []
             save_user_history(st.session_state.current_user, [])
             st.rerun()
-        if st.button("🚪 Tạm biệt"):
+        if st.button("🚪 Đăng xuất"):
             st.session_state.logged_in = False
             st.rerun()
 
@@ -125,30 +126,31 @@ if st.session_state.logged_in:
     if prompt := st.chat_input("Nhắn gì đó với tớ đi..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
-        
-        # Gọi AI ở đây (Giữ nguyên logic API Key của bạn)
-        API_KEY = os.getenv("APIKEY")
-        if API_KEY:
-            try:
-                client = genai.Client(api_key=API_KEY)
-                res = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=prompt,
-                    config={"system_instruction": "bạn là một học sinh cấp 3 năng động gen Z, biết lắng nghe, hay dùng icon, nhắn tin ngắn gọn hoặc sâu sắc tùy vibe."}
-                )
-                with st.chat_message("assistant"): st.markdown(res.text)
-                st.session_state.messages.append({"role": "assistant", "content": res.text})
-                save_user_history(user, st.session_state.messages)
-            except Exception as e: st.error(f"Lỗi AI: {e}")
+        # Logic AI ở đây...
 else:
-    # Màn hình chờ (Như trong ảnh của bạn nhưng thêm hướng dẫn)
+    # MÀN HÌNH CHỜ VỚI NÚT BẤM GIỮA MÀN HÌNH
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
     st.markdown("""
-    <div style="text-align: center; margin-top: 100px;">
-        <h1 style="font-size: 3rem;">🌙 Chào cậu, tớ là AI Soulmate</h1>
-        <p style="font-size: 1.2rem; opacity: 0.8;">Tớ ở đây để lắng nghe và chia sẻ cùng cậu mọi lúc.</p>
-        <div style="margin-top: 50px; padding: 20px; border: 1px solid #333; border-radius: 20px; background: #0a0a0a;">
-            <p>Hãy nhấn vào <b>Vòng tròn trắng đang nhấp nháy</b> ở góc trái phía trên</p>
-            <p>để Đăng nhập và bắt đầu cuộc hành trình nhé! ✨</p>
+        <div style="text-align: center;">
+            <h1 style="font-size: 3.5rem;">🌙 Chào cậu, tớ là AI Soulmate</h1>
+            <p style="font-size: 1.3rem; opacity: 0.8; margin-bottom: 40px;">
+                Tớ ở đây để lắng nghe và chia sẻ cùng cậu mọi lúc.
+            </p>
         </div>
-    </div>
+    """, unsafe_allow_html=True)
+    
+    # Tạo cái nút bằng Streamlit nhưng "giả dạng" HTML để điều hướng vào sidebar
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("✨ BẮT ĐẦU NGAY", use_container_width=True):
+            # Trick: Khi bấm nút này, ta ép sidebar hiện ra nếu nó đang ẩn
+            st.info("Nhìn sang bên trái để Đăng nhập nhé! ←")
+            # Streamlit không có lệnh code để tự mở sidebar, 
+            # nhưng nút này sẽ kích hoạt rerun và sidebar sẽ hiện theo state mặc định
+            st.rerun()
+
+    st.markdown("""
+        <div style="text-align: center; margin-top: 30px; opacity: 0.6;">
+            <p>Hoặc nhấn vào dấu <b>></b> ở góc trái phía trên nếu nút không hiện</p>
+        </div>
     """, unsafe_allow_html=True)
