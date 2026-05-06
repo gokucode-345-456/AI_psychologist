@@ -116,3 +116,30 @@ with st.sidebar:
     
     st.divider()
     st.write("📌 **Lưu ý:** AI không thể thay thế hoàn toàn chuyên gia y tế trong các trường hợp khẩn cấp.")
+
+import json # Thêm thư viện này ở đầu file
+
+# --- HÀM LƯU VÀ ĐỌC FILE ---
+def save_history(messages):
+    with open("chat_history.json", "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=4)
+
+def load_history():
+    if os.path.exists("chat_history.json"):
+        with open("chat_history.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+# --- TRONG PHẦN KHỞI TẠO BỘ NHỚ ---
+if "messages" not in st.session_state:
+    # Thay vì gán bằng [], ta load từ file lên
+    st.session_state.messages = load_history()
+
+# --- TRONG PHẦN XỬ LÝ TIN NHẮN (Sau khi append tin nhắn mới) ---
+# Mỗi lần append tin nhắn mới, ta gọi hàm lưu lại luôn
+st.session_state.messages.append({"role": "user", "content": prompt})
+save_history(st.session_state.messages) # Lưu sau khi user nhắn
+
+# Tương tự sau khi AI trả lời
+st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+save_history(st.session_state.messages) # Lưu sau khi AI trả lời
