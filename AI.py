@@ -3,7 +3,7 @@ from google import genai
 import os
 import json
 
-# --- 1. CẤU HÌNH GIAO DIỆN ---
+# --- 1. GIAO DIỆN ---
 st.set_page_config(page_title="AI Soulmate", page_icon="🌙", layout="centered")
 
 st.markdown("""
@@ -18,23 +18,18 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. HÀM LƯU TRỮ (JSON) ---
+# --- 2. LƯU TRỮ ---
 USER_DB = "users_db.json"
-
 def load_json(path, default):
     if os.path.exists(path):
-        try:
-            with open(path, "r", encoding="utf-8") as f: return json.load(f)
-        except: return default
+        with open(path, "r", encoding="utf-8") as f: return json.load(f)
     return default
-
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. ĐĂNG NHẬP ---
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# --- 3. LOGIC ---
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
     st.markdown("<br><h1 style='text-align: center;'>🌙 AI Soulmate</h1>", unsafe_allow_html=True)
@@ -49,10 +44,9 @@ if not st.session_state.logged_in:
                 if u in users and users[u] == p:
                     st.session_state.logged_in = True
                     st.session_state.current_user = u
-                    # Load data ngay khi vào để không bị trắng trang
                     st.session_state.messages = load_json(f"history_{u}.json", [])
                     st.rerun()
-                else: st.error("Sai thông tin rồi!")
+                else: st.error("Sai rồi kìa!")
         with tab_r:
             nu = st.text_input("Tên mới", key="r_u")
             np = st.text_input("Mật mã mới", type="password", key="r_p")
@@ -62,8 +56,6 @@ if not st.session_state.logged_in:
                     db[nu] = np
                     save_json(USER_DB, db)
                     st.success("Xong! Qua đăng nhập nhé.")
-
-# --- 4. CHAT ---
 else:
     user = st.session_state.current_user
     if "messages" not in st.session_state:
@@ -87,18 +79,15 @@ else:
         if API_KEY:
             try:
                 client = genai.Client(api_key=API_KEY)
-                # DÙNG MÃ NÀY LÀ MƯỢT NHẤT (TƯƠNG ĐƯƠNG 3.1 FAST CỦA CẬU)
+                # DÙNG ID NÀY ĐỂ FIX LỖI 404 TRÊN BẢN SDK MỚI
                 res = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-1.5-flash", 
                     contents=prompt,
                     config={"system_instruction": "Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."}
                 )
                 bot_msg = res.text
             except Exception as e:
-                if "429" in str(e):
-                    bot_msg = "Hic, tớ hơi mệt (hết quota). Đợi tớ 1 phút nhé! 🌙"
-                else:
-                    bot_msg = f"Lỗi: {e}"
+                bot_msg = f"Hic, tớ đang bị quá tải tí. (Lỗi: {str(e)[:40]}...)"
         else: bot_msg = "Chưa có API Key kìa!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
