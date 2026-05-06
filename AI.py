@@ -5,46 +5,68 @@ import json
 
 
 # --- 1. CẤU HÌNH GIAO DIỆN & DARK MODE TOÀN DIỆN ---
+# --- 1. CẤU HÌNH GIAO DIỆN SIÊU RÕ NÉT (DARK MODE) ---
 st.set_page_config(
     page_title="Nhà Tâm Lý Tri Kỷ", 
     page_icon="🌙", 
     layout="centered"
 )
 
-# ÉP TOÀN BỘ GIAO DIỆN SANG MÀU ĐEN (CHỐNG LỖI VIỀN TRẮNG)
 st.markdown("""
     <style>
-    /* Nền tổng thể */
+    /* Nền đen tuyệt đối */
     .stApp {
         background-color: #000000 !important;
     }
 
-    /* Xóa Header và các khoảng trắng thừa */
-    header[data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
-    }
-    
-    /* Ô NHẬP LIỆU - PHẦN QUAN TRỌNG NHẤT */
-    [data-testid="stChatInput"] {
-        background-color: #000000 !important;
+    /* CHỮ TRẮNG TINH: Ép tất cả các loại chữ phải hiện rõ */
+    p, span, div, label, .stMarkdown {
+        color: #FFFFFF !important;
+        font-weight: 400; /* Độ dày vừa phải để không bị nhòe */
+        line-height: 1.6; /* Giãn dòng cho dễ đọc triết lý */
     }
 
-    /* Xóa cái viền trắng bao quanh mà bạn thấy trong hình */
+    /* Tiêu đề phải sáng rực */
+    h1, h2, h3 {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+
+    /* Khung chat: Màu xám rất tối để phân biệt với nền đen, nhưng chữ bên trong phải trắng */
+    .stChatMessage {
+        background-color: #161616 !important;
+        border: 1px solid #333 !important;
+        border-radius: 15px !important;
+    }
+
+    /* Ô NHẬP LIỆU: Xóa sạch viền trắng, chữ gõ vào phải rõ */
+    [data-testid="stChatInput"] {
+        background-color: #000000 !important;
+        border: none !important;
+    }
+    
     [data-testid="stChatInput"] div[role="presentation"] {
         background-color: transparent !important;
         border: none !important;
-        box-shadow: none !important;
-    }
-    
-    .stChatInput textarea {
-        background-color: #1E1E1E !important;
-        color: #FFFFFF !important;
-        border: 1px solid #444 !important;
     }
 
-    /* Ẩn các thành phần giao diện mặc định để app trông 'deep' hơn */
+    .stChatInput textarea {
+        background-color: #222222 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #444 !important;
+        font-size: 16px !important;
+    }
+
+    /* Sidebar cũng phải tối và chữ trắng */
+    section[data-testid="stSidebar"] {
+        background-color: #000000 !important;
+        border-right: 1px solid #222;
+    }
+
+    /* Ẩn các thứ linh tinh */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 # --- 2. LỊCH SỬ FILE (GIỮ NGUYÊN) ---
