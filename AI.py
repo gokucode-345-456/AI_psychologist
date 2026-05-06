@@ -7,7 +7,7 @@ import json
 # --- 1. CẤU HÌNH GIAO DIỆN & DARK MODE TOÀN DIỆN ---
 # --- 1. CẤU HÌNH GIAO DIỆN SIÊU RÕ NÉT (DARK MODE) ---
 st.set_page_config(
-    page_title="Nhà Tâm Lý Tri Kỷ", 
+    page_title="AI chat", 
     page_icon="🌙", 
     layout="centered"
 )
@@ -32,14 +32,11 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Khung chat: Màu xám rất tối để phân biệt với nền đen, nhưng chữ bên trong phải trắng */
     .stChatMessage {
         background-color: #161616 !important;
         border: 1px solid #333 !important;
         border-radius: 15px !important;
     }
-
-    /* Ô NHẬP LIỆU: Xóa sạch viền trắng, chữ gõ vào phải rõ */
     [data-testid="stChatInput"] {
         background-color: #000000 !important;
         border: none !important;
@@ -86,7 +83,6 @@ def load_history():
 if "messages" not in st.session_state:
     st.session_state.messages = load_history()
 
-# --- 3. LOGIC CHAT MỚI (CHỐNG LỖI CLOSED CLIENT) ---
 API_KEY_ENV = os.getenv("APIKEY")
 
 def send_to_ai(prompt):
