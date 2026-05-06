@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. LOGIC ĐĂNG NHẬP ---
+# --- 3. ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -73,36 +73,25 @@ else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"): st.markdown(prompt)
         
-        # Lấy Key từ Secrets hoặc Env
+        # Ưu tiên lấy Key từ Secrets của Streamlit
         API_KEY = st.secrets.get("APIKEY") or os.getenv("APIKEY")
         
         if API_KEY:
             try:
+                # Cấu hình API theo cách truyền thống nhất
                 genai.configure(api_key=API_KEY)
                 
-                # DANH SÁCH CÁC CÁCH GỌI MODEL (THỬ TỪNG CÁI CHO ĐẾN KHI CHẠY)
-                model_names = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-1.5-flash-latest"]
-                bot_msg = ""
+                # Gọi model đúng ID mà Google quy định cho thư viện này
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 
-                for name in model_names:
-                    try:
-                        model = genai.GenerativeModel(
-                            model_name=name,
-                            system_instruction="Bạn là gen Z, nhắn tin ngắn gọn, thấu hiểu."
-                        )
-                        response = model.generate_content(prompt)
-                        bot_msg = response.text
-                        if bot_msg: break # Nếu có phản hồi thì dừng lại
-                    except Exception as inner_e:
-                        continue # Nếu lỗi thì thử tên tiếp theo
+                response = model.generate_content(prompt)
+                bot_msg = response.text
                 
-                if not bot_msg:
-                    bot_msg = "Tớ đã thử hết các cách gọi model nhưng Google vẫn báo 404. Cậu kiểm tra lại xem API Key có bị giới hạn vùng miền (Region) không nhé."
-
             except Exception as e:
-                bot_msg = f"Lỗi không xác định: {str(e)[:100]}"
+                # Hiện lỗi thật sự để cậu copy gửi tớ nếu vẫn lỗi
+                bot_msg = f"Lỗi kỹ thuật thật: {str(e)}"
         else: 
-            bot_msg = "Thiếu API Key! Cậu hãy vào Settings -> Secrets trên Streamlit Cloud dán APIKEY = 'mã_của_cậu' vào nhé."
+            bot_msg = "Cậu chưa dán API Key vào Secrets rồi!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
