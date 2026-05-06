@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai  # Dùng thư viện chuẩn này cho ổn định
+import google.generativeai as genai
 import os
 import json
 
@@ -12,7 +12,7 @@ st.markdown("""
     [data-testid="stSidebar"], [data-testid="collapsedControl"], [data-testid="stToolbar"] { display: none !important; }
     footer, header { visibility: hidden; }
     .stTextInput input { background-color: #1a1a1a !important; color: white !important; border-radius: 10px !important; border: 1px solid #333 !important; }
-    .stButton>button { width: 100%; background-color: #ffffff !important; color: #000000 !important; border-radius: 20px !important; font-weight: bold !important; border: none !important; }
+    .stButton>button { width: 100%; background-color: #ffffff !important; color: #000000 !important; border-radius: 20px !important; font-weight: bold !important; }
     .stChatMessage { background-color: #111111 !important; border: 1px solid #222 !important; border-radius: 15px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. ĐĂNG NHẬP ---
+# --- 3. LOGIC ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -76,21 +76,17 @@ else:
         API_KEY = os.getenv("APIKEY")
         if API_KEY:
             try:
-                # DÙNG THƯ VIỆN GOOGLE-GENERATIVEAI (BẢN GỐC)
                 genai.configure(api_key=API_KEY)
+                # ĐÚNG MODEL GEMINI 1.5 FLASH CẬU CẦN
                 model = genai.GenerativeModel(
                     model_name="gemini-1.5-flash",
                     system_instruction="Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."
                 )
-                
-                # Gửi tin nhắn
                 response = model.generate_content(prompt)
                 bot_msg = response.text
-                
             except Exception as e:
-                # Hiện lỗi thật để tớ còn biết đường mà fix
-                bot_msg = f"Vẫn lỗi nè: {str(e)}"
-        else: bot_msg = "Chưa có API Key kìa!"
+                bot_msg = f"Lỗi kỹ thuật: {str(e)[:50]}..."
+        else: bot_msg = "Thiếu API Key rồi cậu ơi!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
         with st.chat_message("assistant"): st.markdown(bot_msg)
