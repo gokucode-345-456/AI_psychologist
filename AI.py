@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 import requests
 import os
@@ -133,4 +133,3 @@ else:
             st.markdown(bot_msg)
 
         save_json(f"history_{user}.json", st.session_state.messages)
-```
