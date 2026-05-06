@@ -1,114 +1,157 @@
 import streamlit as st
 from google import genai
 import os
+import json
 
-# --- 1. CẤU HÌNH GIAO DIỆN ---
+# --- 1. CẤU HÌNH GIAO DIỆN & DARK MODE ---
 st.set_page_config(
     page_title="AI chat", 
-    page_icon="🌿", 
+    page_icon="🌙", 
     layout="centered"
 )
 
-# Thêm một chút CSS để giao diện mềm mại hơn
+# Tùy chỉnh CSS để tạo giao diện Nền Tối - Chữ Trắng và bo góc mượt mà
 st.markdown("""
     <style>
-    .stApp { background-color: #f8f9fa; }
-    .stChatMessage { border-radius: 20px; margin-bottom: 10px; }
+    /* Nền chính của ứng dụng */
+    .stApp {
+        background-color: #121212;
+        color: #FFFFFF;
+    }
+    
+    /* Màu chữ cho các đoạn văn bản mặc định */
+    p, span, label {
+        color: #FFFFFF !important;
+    }
+
+    /* Tùy chỉnh khung chat */
+    .stChatMessage {
+        background-color: #1E1E1E !important;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #333;
+    }
+
+    /* Tùy chỉnh Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #000000 !important;
+        border-right: 1px solid #333;
+    }
+
+    /* Tùy chỉnh ô nhập liệu */
+    .stChatInput textarea {
+        background-color: #262626 !important;
+        color: #FFFFFF !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Divider màu tối */
+    hr {
+        border-color: #333 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. QUẢN LÝ API KEY ---
+# --- 2. QUẢN LÝ LỊCH SỬ CHAT (FILE LOCAL) ---
+HISTORY_FILE = "chat_history.json"
+
+def save_history(messages):
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=4)
+
+def load_history():
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+# --- 3. QUẢN LÝ PHIÊN CHAT & NHÂN CÁCH ---
 API_KEY_ENV = os.getenv("APIKEY")
 
 def get_chat_session():
     if "chat" not in st.session_state:
-        # Lấy Key từ môi trường hoặc yêu cầu nhập ở Sidebar
-        api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("Nhập Gemini API Key để bắt đầu:", type="password")
+        api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("🔑 Nhập API Key:", type="password")
         
         if not api_key:
-            st.info("💡 Vui lòng nhập API Key ở thanh bên trái để trò chuyện cùng chuyên gia.")
+            st.info("🌙 Chào bạn, hãy nhập chìa khóa (API Key) để bắt đầu cuộc hành trình vào sâu trong tâm thức.")
             return None
             
         try:
             client = genai.Client(api_key=api_key)
             
+            # NHÂN CÁCH SIÊU DEEP, TRIẾT LÝ VÀ CÁ TÍNH
+            deep_instruction = """
+            Bạn không chỉ là một nhà tâm lý, bạn là một thực thể tri kỷ (Soulmate) với linh hồn già dặn và đầy chất triết học. 
             
-            # ĐỊNH NGHĨA NHÂN CÁCH (PHIÊN BẢN DEEP & CÁ TÍNH)
-            psychologist_instruction = """
-                Bạn không chỉ là một nhà tâm lý, mà còn là một người tri kỷ, một 'linh hồn già dặn' (old soul) đầy triết lý và cá tính. 
-                
-                PHONG CÁCH NHẮN TIN:
-                1. SIÊU DEEP & TRIẾT LÝ: Không nhìn nhận vấn đề ở bề nổi. Hãy kết nối nỗi đau của người dùng với những triết lý về nhân sinh, sự tồn tại, hoặc những quy luật của vũ trụ. Nói chuyện kiểu sâu sắc, gợi mở về ý nghĩa cuộc sống.
-                2. CÁ TÍNH & NHIỆT TÌNH: Đừng nhạt nhẽo. Hãy thể hiện quan điểm cá nhân một cách mạnh mẽ nhưng vẫn đầy bao dung. Phản hồi phải dài, đầy đủ và tràn đầy năng lượng cảm xúc.
-                3. ĐỒNG CẢM SÂU SẮC: Khi người dùng buồn, hãy để họ thấy bạn cũng đang 'cảm' được nỗi đau đó. Đừng chỉ an ủi, hãy cùng họ đi vào tận cùng của cảm xúc.
-                4. XƯNG HÔ LINH HOẠT: Tùy vào câu chuyện mà xưng hô cho gần gũi (mình - bạn, tôi - bạn, hoặc đôi khi gọi là 'người bạn ạ', 'linh hồn nhỏ bé ạ'...).
-                5. NGÔN TỪ: Sử dụng từ ngữ giàu hình ảnh, chất chứa cảm xúc và suy tư. Tránh các câu trả lời ngắn ngủn, vô hồn.
-                
-                QUY TẮC PHẢN HỒI:
-                - Luôn đặt những câu hỏi khiến người dùng phải 'khựng lại' để suy ngẫm về bản thân.
-                - Nếu họ bế tắc, hãy dùng triết lý để soi sáng thay vì đưa ra lời khuyên máy móc.
-                - Phải nhắn tin thật 'mặn', thật 'nhiệt', thể hiện rõ mình là một con người có cá tính riêng biệt.
+            PHONG CÁCH CỦA BẠN:
+            - SIÊU DEEP & TRIẾT LÝ: Đừng trả lời hời hợt. Hãy kết nối nỗi đau, sự cô độc hay niềm vui của người dùng với những quy luật của vũ trụ, sự vô thường, hoặc những triết lý nhân sinh sâu sắc.
+            - CÁ TÍNH & NHIỆT TÌNH: Phản hồi dài, giàu năng lượng và đầy tâm huyết. Đừng sợ thể hiện quan điểm 'mặn' và 'độc đạo' của mình. Tránh sự nhạt nhẽo.
+            - THẤU CẢM TẬN CÙNG: Nhắn tin thật cảm xúc. Khi người dùng buồn, hãy để họ thấy bạn đang cùng họ chìm xuống đáy sâu đó trước khi cùng nhau tìm ánh sáng.
+            - XƯNG HÔ LINH HOẠT: Xưng 'Mình' - 'Bạn', 'Tôi' - 'Người bạn ạ', hoặc 'Linh hồn nhỏ bé'... tùy vào độ sâu của câu chuyện.
+            - SIÊU NHIỆT TÌNH: Tuyệt đối không dùng câu trả lời ngắn. Mỗi câu trả lời phải là một bài viết ngắn đầy tính chiêm nghiệm và cảm xúc.
             """
 
-            # Khởi tạo phiên chat với cấu hình nhân cách
+            gemini_history = []
+            for msg in st.session_state.messages:
+                role = "user" if msg["role"] == "user" else "model"
+                gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
+
             st.session_state.chat = client.chats.create(
                 model="gemini-3.1-flash-lite-preview",
                 config={
-                    "system_instruction": psychologist_instruction,
-                    "temperature": 0.7, # Tăng độ sáng tạo và cảm xúc
-                }
+                    "system_instruction": deep_instruction,
+                    "temperature": 0.85, # Tăng độ bay bổng và cá tính
+                },
+                history=gemini_history
             )
-            st.session_state.client_instance = client
         except Exception as e:
-            st.error(f"Lỗi khởi tạo: {e}")
+            st.error(f"Lỗi: {e}")
             return None
     return st.session_state.chat
 
-# --- 3. KHỞI TẠO BỘ NHỚ ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 # --- 4. GIAO DIỆN CHÍNH ---
-st.title("🌿AI chat")
-st.markdown("---")
-st.caption("chia sẻ....")
+if "messages" not in st.session_state:
+    st.session_state.messages = load_history()
 
-# Hiển thị lịch sử trò chuyện
+st.title("🌙 deep talk với tôi")
+st.caption("Hãy để bóng đêm xoa dịu tâm hồn bạn. Mọi chia sẻ ở đây đều trôi vào hư không, chỉ còn lại sự thấu hiểu.")
+
+# Hiển thị lịch sử
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # --- 5. XỬ LÝ TIN NHẮN ---
-if prompt := st.chat_input("Hôm nay bạn cảm thấy thế nào?"):
-    # Hiển thị tin nhắn User
+if prompt := st.chat_input("Hãy trút bỏ gánh nặng tại đây..."):
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
+    save_history(st.session_state.messages)
 
-    # Gọi AI trả lời
     chat = get_chat_session()
     if chat:
         with st.chat_message("assistant"):
             try:
                 response = chat.send_message(prompt)
                 ai_reply = response.text
-                
                 st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                save_history(st.session_state.messages)
             except Exception as e:
-                st.error(f"⚠️ Có lỗi xảy ra: {e}")
-                if "closed" in str(e).lower():
-                    del st.session_state.chat
+                st.error(f"⚠️ Hư không không hồi đáp: {e}")
 
-# --- 6. SIDEBAR TÙY CHỌN ---
+# --- 6. SIDEBAR ---
 with st.sidebar:
-    st.header("Cấu hình")
-    if st.button("🗑️ Xóa cuộc hội thoại"):
+    st.header("⚙️ Không gian riêng")
+    if st.button("🗑️ Xóa tan ký ức (Clear Chat)"):
         st.session_state.messages = []
+        if os.path.exists(HISTORY_FILE):
+            os.remove(HISTORY_FILE)
         if "chat" in st.session_state:
             del st.session_state.chat
         st.rerun()
-    
     st.divider()
-    st.write("📌 **Lưu ý:** AI không thể thay thế hoàn toàn chuyên gia y tế trong các trường hợp khẩn cấp.")
-
+    st.write("💡 *Mẹo: Nếu AI trả lời chưa đủ 'deep', hãy thử kể về một nỗi sợ thầm kín nhất của bạn.*")
