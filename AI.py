@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai  # Dùng thư viện chuẩn này cho ổn định
 import os
 import json
 
@@ -26,7 +26,7 @@ def load_json(path, default):
 def save_json(path, data):
     with open(path, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- 3. LOGIC ĐĂNG NHẬP ---
+# --- 3. ĐĂNG NHẬP ---
 if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
@@ -76,31 +76,20 @@ else:
         API_KEY = os.getenv("APIKEY")
         if API_KEY:
             try:
-                # FIX 404 TRIỆT ĐỂ: Thêm cấu hình http_options để ép dùng bản ổn định
-                client = genai.Client(api_key=API_KEY)
-                
-                # Thử dùng ID phổ biến nhất cho bản Flash
-                res = client.models.generate_content(
-                    model="gemini-1.5-flash", 
-                    contents=prompt,
-                    config={"system_instruction": "Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."}
+                # DÙNG THƯ VIỆN GOOGLE-GENERATIVEAI (BẢN GỐC)
+                genai.configure(api_key=API_KEY)
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    system_instruction="Bạn là gen Z, nhắn tin ngắn gọn, dùng icon, thấu hiểu."
                 )
-                bot_msg = res.text
+                
+                # Gửi tin nhắn
+                response = model.generate_content(prompt)
+                bot_msg = response.text
+                
             except Exception as e:
-                # Nếu vẫn lỗi 404, tớ sẽ tự động thử model dự phòng (1.5 Flash bản mới nhất)
-                if "404" in str(e):
-                    try:
-                        res = client.models.generate_content(
-                            model="gemini-1.5-flash-latest", # Tên model dự phòng 1
-                            contents=prompt
-                        )
-                        bot_msg = res.text
-                    except:
-                        bot_msg = "Vẫn lỗi 404. Cậu kiểm tra lại API Key xem có phải Key cũ từ năm ngoái không nhé!"
-                elif "429" in str(e):
-                    bot_msg = "Hết lượt dùng rồi (429), đợi 1 phút nhé!"
-                else:
-                    bot_msg = f"Lỗi: {str(e)[:50]}..."
+                # Hiện lỗi thật để tớ còn biết đường mà fix
+                bot_msg = f"Vẫn lỗi nè: {str(e)}"
         else: bot_msg = "Chưa có API Key kìa!"
 
         st.session_state.messages.append({"role": "assistant", "content": bot_msg})
