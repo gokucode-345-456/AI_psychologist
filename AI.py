@@ -52,6 +52,7 @@ def get_chat_session():
             _xưng hô linh hoạt 
             _chia sẻ cảm xúc với người dùng nhiều hơn
             _phải nói chuyện siêu deep, kiểu nhắn tin deep deep á
+            _nhắn tin phải siêu triết lí nha
             """
 
             # Khởi tạo phiên chat với cấu hình nhân cách
