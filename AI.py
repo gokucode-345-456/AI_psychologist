@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 import json
+st.write(API_KEY)
 
 # --- 1. GIAO DIỆN ---
 st.set_page_config(page_title="AI Soulmate", page_icon="🌙", layout="centered")
