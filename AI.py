@@ -8,18 +8,18 @@ st.set_page_config(
     page_title="AI chat", 
     page_icon="🌙", 
     layout="centered",
-    initial_sidebar_state="expanded" # LUÔN MỞ SIDEBAR KHI LOAD
+    initial_sidebar_state="expanded" # LUÔN MỞ SIDEBAR
 )
 
 # CSS TỔNG LỰC: ĐEN TUYỀN, CHỮ TRẮNG, NÚT TRẮNG, KHÓA SIDEBAR
 st.markdown("""
     <style>
-    /* 1. Nền đen tuyệt đối cho toàn bộ ứng dụng */
+    /* Nền đen tuyệt đối */
     .stApp {
         background-color: #000000 !important;
     }
 
-    /* 2. CHỮ TRẮNG TINH: Không mờ, dễ đọc */
+    /* CHỮ TRẮNG TINH */
     p, span, div, label, .stMarkdown {
         color: #FFFFFF !important;
         font-weight: 400; 
@@ -27,7 +27,7 @@ st.markdown("""
     }
     h1, h2, h3 { color: #FFFFFF !important; font-weight: 700 !important; }
 
-    /* 3. KHÓA SIDEBAR: Giấu cái nút << đi để không bao giờ bị ẩn nhầm nữa */
+    /* KHÓA SIDEBAR & GIẤU NÚT << */
     [data-testid="collapsedControl"] {
         display: none !important;
     }
@@ -39,8 +39,7 @@ st.markdown("""
         border-right: 1px solid #222;
     }
 
-    /* 4. STYLE CHO NÚT MÀU TRẮNG (Cuộc trò chuyện mới) */
-    /* Target vào cái nút đầu tiên trong sidebar */
+    /* STYLE CHO NÚT MÀU TRẮNG (Cuộc trò chuyện mới) */
     div.stSidebar div.stButton > button:first-child {
         background-color: #FFFFFF !important;
         color: #000000 !important;
@@ -54,14 +53,14 @@ st.markdown("""
         background-color: #dddddd !important;
     }
 
-    /* 5. Khung chat tối giản */
+    /* Khung chat */
     .stChatMessage {
         background-color: #161616 !important;
         border: 1px solid #333 !important;
         border-radius: 15px !important;
     }
 
-    /* 6. Ô NHẬP LIỆU: Tiêu diệt viền trắng hoàn toàn */
+    /* Ô NHẬP LIỆU */
     [data-testid="stChatInput"] {
         background-color: #000000 !important;
         border: none !important;
@@ -77,7 +76,7 @@ st.markdown("""
         font-size: 16px !important;
     }
 
-    /* 7. Ẩn rác của Streamlit */
+    /* Ẩn rác của Streamlit */
     [data-testid="stToolbar"] {display: none;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -103,7 +102,7 @@ if "messages" not in st.session_state:
 
 API_KEY_ENV = os.getenv("APIKEY")
 
-# --- 3. HÀM GỬI TIN NHẮN (BẢN ỔN ĐỊNH) ---
+# --- 3. HÀM GỬI TIN NHẮN (QUAY LẠI BẢN 3.1 NGON LÀNH) ---
 def send_to_ai(prompt):
     api_key = API_KEY_ENV if API_KEY_ENV else st.sidebar.text_input("🔑 Nhập API Key:", type="password")
     
@@ -127,9 +126,9 @@ def send_to_ai(prompt):
             role = "user" if msg["role"] == "user" else "model"
             gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-        # Dùng model ổn định nhất để tránh lỗi 404/503
+        # TRẢ LẠI CON 3.1 CHO ÔNG ĐÂY
         chat = client.chats.create(
-            model="gemini-1.5-flash", 
+            model="gemini-3.1-flash-lite-preview", 
             config={"system_instruction": instruction, "temperature": 0.85},
             history=gemini_history
         )
@@ -159,16 +158,14 @@ if prompt := st.chat_input("Hãy trút bỏ gánh nặng tại đây..."):
             st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             save_history(st.session_state.messages)
 
-# --- 5. SIDEBAR BẤT TỬ ---
+# --- 5. SIDEBAR ---
 with st.sidebar:
     st.write("") 
-    # Nút màu trắng nổi bật
     if st.button("➕ Cuộc trò chuyện mới", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
     st.write("") 
-    # Nút xóa lịch sử
     if st.button("🗑️ Xóa tan ký ức", use_container_width=True):
         st.session_state.messages = []
         if os.path.exists(HISTORY_FILE): 
@@ -176,4 +173,4 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    st.caption("Sidebar này sẽ không bao giờ ẩn đi nữa. Nút trắng luôn ở đây cùng bạn.")
+    st.caption("Đã quay lại Gemini 3.1 theo yêu cầu. Sidebar đã được khóa chặt.")
