@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 import requests
 import os
@@ -254,4 +254,3 @@ Kiểm tra:
             f"history_{user}.json",
             st.session_state.messages
         )
-```
