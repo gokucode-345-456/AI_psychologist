@@ -79,11 +79,13 @@ else:
             bot_msg = ""
             # --- PHẦN FIX LỖI 404 CHIẾN THUẬT ---
             # Thử lần lượt các Endpoint và Model ID khác nhau
+           
             endpoints = [
-                f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}",
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={API_KEY}",
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key={API_KEY}"
             ]
-            
+
+
             for url in endpoints:
                 try:
                     headers = {'Content-Type': 'application/json'}
