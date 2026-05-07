@@ -163,15 +163,11 @@ else:
 
             bot_msg = None
 
+            
             endpoints = [
-
-                # MODEL MỚI
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}",
-
-                # FALLBACK
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={API_KEY}"
-
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
             ]
+
 
             for url in endpoints:
 
